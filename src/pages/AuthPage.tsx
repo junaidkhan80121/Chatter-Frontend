@@ -215,20 +215,35 @@ export default function AuthPage() {
         </div>
 
         {/* Quick Dev Bypass */}
-        <div style={{ textAlign: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+        <div style={{ textAlign: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', justifyContent: 'center' }}>
           <button
             className="btn btn-ghost btn-sm"
-            style={{ color: '#00D1A1' }}
+            style={{ color: '#00D1A1', flex: 1, padding: 0 }}
             onClick={() => {
               setAuth(
-                { id: '1', username: 'dummy_user', email: 'dummy@example.com', display_name: 'Dummy Tester', status: 'online', avatar_url: null, unique_share_id: 'dummy-123', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
-                'dummy_access_token',
-                'dummy_refresh_token'
+                { id: 'dev-user-1', username: 'tester_1', email: 't1@example.com', display_name: 'Alex (User 1)', status: 'online', avatar_url: null, unique_share_id: 'dummy-123', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
+                'dummy_token_1',
+                'refresh_1'
               );
               navigate('/');
             }}
           >
-            🚀 Quick Dev Login (Bypass Database)
+            🚀 Login User 1
+          </button>
+          
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ color: '#FFB830', flex: 1, padding: 0 }}
+            onClick={() => {
+              setAuth(
+                { id: 'dev-user-2', username: 'tester_2', email: 't2@example.com', display_name: 'Sam (User 2)', status: 'online', avatar_url: null, unique_share_id: 'dummy-456', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
+                'dummy_token_2',
+                'refresh_2'
+              );
+              navigate('/');
+            }}
+          >
+            🚀 Login User 2
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 15000,
 })
 
@@ -19,6 +19,12 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
+    
+    // Ignore 401 redirects if we are in Dev Bypass Mode
+    if (original.headers?.Authorization?.includes('dummy_token')) {
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
       const refreshToken = localStorage.getItem('refresh_token')
