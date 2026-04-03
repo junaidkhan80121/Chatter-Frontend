@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, Users } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { useChatStore, type Conversation } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
 import { convApi } from '@/services/api'
 import Avatar from '@/components/ui/Avatar'
 import { formatDistanceToNow } from 'date-fns'
 import NewChatModal from '@/components/modals/NewChatModal'
+import { Box, Typography, IconButton, TextField, InputAdornment, Skeleton, Badge } from '@mui/material'
 
 interface Props {
   onConvSelect: (conv: Conversation) => void
@@ -71,7 +72,6 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
     return name.includes(search.toLowerCase())
   })
 
-  // Sort: pinned first, then by last message
   const sorted = [...filtered].sort((a, b) => {
     if (a.pinned_at && !b.pinned_at) return -1
     if (!a.pinned_at && b.pinned_at) return 1
@@ -81,49 +81,87 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
   })
 
   return (
-    <div className="chat-list-sidebar">
-      {/* Header */}
-      <div className="chat-list-header">
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <h1 className="chat-list-title">{showArchived ? 'Archive' : 'Messages'}</h1>
-          <button className="icon-btn" onClick={() => setShowNewChat(true)}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            {showArchived ? 'Archive' : 'Messages'}
+          </Typography>
+          <IconButton onClick={() => setShowNewChat(true)} size="small" sx={{ color: 'text.secondary' }}>
             <Plus size={18} />
-          </button>
-        </div>
-        <div className="search-bar">
-          <Search size={16} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-          <input
-            placeholder="Search conversations..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
+          </IconButton>
+        </Box>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search conversations..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={16} style={{ color: 'rgba(240, 240, 255, 0.35)' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '9999px',
+              bgcolor: 'rgba(255, 255, 255, 0.06)',
+            },
+          }}
+        />
+      </Box>
 
-      {/* List */}
-      <div className="chat-list-body">
+      <Box sx={{ flex: 1, overflowY: 'auto', py: 1 }}>
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="chat-item">
-              <div className="skeleton avatar-md" style={{ borderRadius: '50%', flexShrink: 0 }} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div className="skeleton" style={{ height: 14, width: '60%' }} />
-                <div className="skeleton" style={{ height: 11, width: '80%' }} />
-              </div>
-            </div>
+            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25 }}>
+              <Skeleton variant="circular" width={40} height={40} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton width="60%" height={14} />
+                <Skeleton width="80%" height={11} sx={{ mt: 0.75 }} />
+              </Box>
+            </Box>
           ))
         ) : sorted.length === 0 ? (
-          <div className="empty-state" style={{ paddingTop: 60 }}>
-            <div className="empty-state-icon">{showArchived ? '📦' : '💬'}</div>
-            <div className="empty-state-title">{showArchived ? 'No archived chats' : 'No chats yet'}</div>
-            <div className="empty-state-sub">Start a conversation with a friend</div>
-          </div>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pt: 7.5, gap: 2, textAlign: 'center' }}>
+            <Typography sx={{ fontSize: 48 }}>{showArchived ? '📦' : '💬'}</Typography>
+            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+              {showArchived ? 'No archived chats' : 'No chats yet'}
+            </Typography>
+            <Typography variant="body2" color="text.disabled">
+              Start a conversation with a friend
+            </Typography>
+          </Box>
         ) : (
           sorted.map((conv) => (
-            <div
+            <Box
               key={conv.id}
-              className={`chat-item ${activeConvId === conv.id ? 'active' : ''}`}
               onClick={() => onConvSelect(conv)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2,
+                py: 1.25,
+                cursor: 'pointer',
+                bgcolor: activeConvId === conv.id ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
+                position: 'relative',
+                '&:hover': { bgcolor: 'rgba(108, 99, 255, 0.08)' },
+                ...(activeConvId === conv.id && {
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: 8,
+                    bottom: 8,
+                    width: 3,
+                    bgcolor: 'primary.main',
+                    borderRadius: '0 3px 3px 0',
+                  },
+                }),
+              }}
             >
               <Avatar
                 src={getConvAvatar(conv)}
@@ -131,13 +169,13 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
                 size="md"
                 status={getConvStatus(conv)}
               />
-              <div className="chat-item-info">
-                <div className="chat-item-top">
-                  <span className="chat-item-name">
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.25 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {conv.pinned_at && '📌 '}
                     {getConvName(conv)}
-                  </span>
-                  <span className="chat-item-time">
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {conv.last_message
                       ? formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false })
                           .replace('about ', '')
@@ -145,21 +183,21 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
                           .replace(' hours', 'h')
                           .replace(' days', 'd')
                       : ''}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="chat-item-preview">{getLastMsg(conv)}</span>
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {getLastMsg(conv)}
+                  </Typography>
                   {conv.unread_count > 0 && (
-                    <span className="badge" style={{ marginLeft: 8, flexShrink: 0 }}>
-                      {conv.unread_count > 99 ? '99+' : conv.unread_count}
-                    </span>
+                    <Badge badgeContent={conv.unread_count > 99 ? '99+' : conv.unread_count} color="primary" sx={{ ml: 1, flexShrink: 0 }} />
                   )}
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           ))
         )}
-      </div>
+      </Box>
 
       {showNewChat && (
         <NewChatModal 
@@ -170,6 +208,6 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
           }}
         />
       )}
-    </div>
+    </Box>
   )
 }

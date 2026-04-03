@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Phone, Video, MoreVertical, Search, X, ChevronLeft,
   Paperclip, Smile, Send, Check, CheckCheck
@@ -13,12 +13,12 @@ import {
 } from '@/services/socket'
 import Avatar from '@/components/ui/Avatar'
 import { format } from 'date-fns'
-// @ts-ignore — emoji-mart types
 import EmojiPicker from '@emoji-mart/react'
 import data from '@emoji-mart/data'
 import IncomingCallToast from '@/components/calls/IncomingCallToast'
 import VideoCallOverlay from '@/components/calls/VideoCallOverlay'
 import { useCallStore } from '@/store/callStore'
+import { Box, IconButton, Typography, TextField, CircularProgress, Button } from '@mui/material'
 
 interface Props {
   conversation: Conversation | null
@@ -27,7 +27,7 @@ interface Props {
 
 export default function MessagePane({ conversation, onBack }: Props) {
   const { user } = useAuthStore()
-  const { messages, setMessages, hasMore, nextCursor, typing } = useChatStore()
+  const { messages, setMessages, typing } = useChatStore()
   const { status: callStatus, incomingCall } = useCallStore()
 
   const [inputText, setInputText] = useState('')
@@ -67,23 +67,19 @@ export default function MessagePane({ conversation, onBack }: Props) {
   }, [convId])
 
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [convMessages.length])
 
   const loadMessages = async (id: string) => {
     setLoading(true)
     try {
-      const { data } = await convApi.getMessages(id, { limit: 50 })
-      setMessages(id, data.items, data.has_more, data.next_cursor)
+      const { data: res } = await convApi.getMessages(id, { limit: 50 })
+      setMessages(id, res.items, res.has_more, res.next_cursor)
     } catch {
       // silent
     } finally {
       setLoading(false)
     }
-  }
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleTyping = (val: string) => {
@@ -120,7 +116,7 @@ export default function MessagePane({ conversation, onBack }: Props) {
         reply_to_id: replyTo?.id,
       })
     } catch {
-      setInputText(text) // restore on error
+      setInputText(text)
     } finally {
       setSending(false)
       inputRef.current?.focus()
@@ -139,13 +135,13 @@ export default function MessagePane({ conversation, onBack }: Props) {
     if (!file || !convId) return
 
     try {
-      const { data } = await fileApi.upload(file)
+      const { data: fileData } = await fileApi.upload(file)
       getSocket().emit('send_message', {
         conversation_id: convId,
-        message_type: data.message_type,
-        file_url: data.file_url,
-        file_name: data.file_name,
-        file_size: data.file_size,
+        message_type: fileData.message_type,
+        file_url: fileData.file_url,
+        file_name: fileData.file_name,
+        file_size: fileData.file_size,
       })
     } catch {
       alert('File upload failed')
@@ -198,13 +194,13 @@ export default function MessagePane({ conversation, onBack }: Props) {
 
   if (!conversation) {
     return (
-      <div className="message-pane">
-        <div className="empty-state" style={{ flex: 1 }}>
-          <div className="empty-state-icon">💬</div>
-          <div className="empty-state-title">Select a conversation</div>
-          <div className="empty-state-sub">Choose a chat from the list to start messaging</div>
-        </div>
-      </div>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 5, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: 48 }}>💬</Typography>
+          <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 700 }}>Select a conversation</Typography>
+          <Typography variant="body2" color="text.disabled">Choose a chat from the list to start messaging</Typography>
+        </Box>
+      </Box>
     )
   }
 
@@ -225,14 +221,13 @@ export default function MessagePane({ conversation, onBack }: Props) {
 
   return (
     <>
-      <div className="message-pane">
-        {/* Header */}
-        <div className="message-pane-header">
-          <div className="message-pane-user">
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default', minWidth: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 1.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {onBack && (
-              <button className="icon-btn" onClick={onBack} style={{ marginRight: 4 }}>
+              <IconButton onClick={onBack} size="small" sx={{ color: 'text.secondary', mr: 0.5 }}>
                 <ChevronLeft size={20} />
-              </button>
+              </IconButton>
             )}
             <Avatar
               src={conversation.avatar_url || (conversation.participants.find(p => p.id !== user?.id)?.avatar_url)}
@@ -242,74 +237,68 @@ export default function MessagePane({ conversation, onBack }: Props) {
                 ? (conversation.participants.find(p => p.id !== user?.id)?.status as any)
                 : null}
             />
-            <div>
-              <div className="message-pane-name">{getConvName()}</div>
-              <div className="message-pane-status" style={{
-                color: getConvStatus() === 'Online' ? 'var(--accent-teal)' : 'var(--text-tertiary)'
-              }}>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 700 }}>{getConvName()}</Typography>
+              <Typography variant="caption" sx={{ color: getConvStatus() === 'Online' ? 'success.main' : 'text.disabled' }}>
                 {otherTypingNames.length > 0
                   ? `${otherTypingNames[0]} is typing...`
                   : getConvStatus()}
-              </div>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
-          <div className="flex items-center gap-1">
-            <button className="icon-btn" onClick={() => setShowSearch(s => !s)} title="Search">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <IconButton onClick={() => setShowSearch(s => !s)} size="small" sx={{ color: 'text.secondary' }}>
               <Search size={18} />
-            </button>
-            <button className="icon-btn" onClick={() => handleCall('audio')} title="Audio call">
+            </IconButton>
+            <IconButton onClick={() => handleCall('audio')} size="small" sx={{ color: 'text.secondary' }}>
               <Phone size={18} />
-            </button>
-            <button className="icon-btn" onClick={() => handleCall('video')} title="Video call">
+            </IconButton>
+            <IconButton onClick={() => handleCall('video')} size="small" sx={{ color: 'text.secondary' }}>
               <Video size={18} />
-            </button>
-            <button className="icon-btn" title="More options">
+            </IconButton>
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
               <MoreVertical size={18} />
-            </button>
-          </div>
-        </div>
+            </IconButton>
+          </Box>
+        </Box>
 
-        {/* Search bar */}
         {showSearch && (
-          <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-            <input
-              className="input-field"
+          <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
               placeholder="Search in conversation..."
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              style={{ flex: 1 }}
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: 6 },
+              }}
             />
-            <button className="btn btn-primary btn-sm" onClick={handleSearch}>Search</button>
-          </div>
+            <Button variant="contained" size="small" onClick={handleSearch}>Search</Button>
+          </Box>
         )}
 
-        {/* Messages */}
-        <div className="messages-body" id="messages-body">
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {loading && (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)', fontSize: 13 }}>
-              <span className="spinner" style={{ display: 'inline-block' }} />
-            </div>
+            <Box sx={{ textAlign: 'center', py: 2.5 }}>
+              <CircularProgress size={20} sx={{ color: 'primary.main' }} />
+            </Box>
           )}
 
           {groupedMessages.map(({ date, messages: grpMsgs }) => (
             <React.Fragment key={date}>
-              {/* Date divider */}
-              <div style={{
-                textAlign: 'center', margin: '8px 0',
-                fontSize: 11, color: 'var(--text-tertiary)',
-                display: 'flex', alignItems: 'center', gap: 8
-              }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 1, fontSize: 11, color: 'text.disabled' }}>
+                <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
                 {date}
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              </div>
+                <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+              </Box>
 
               {grpMsgs.map((msg) => {
                 const isOwn = msg.sender_id === user?.id
                 return (
-                  <div key={msg.id} className={`message-bubble-wrap ${isOwn ? 'outgoing' : 'incoming'}`}>
+                  <Box key={msg.id} sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, maxWidth: '70%', alignSelf: isOwn ? 'flex-end' : 'flex-start' }}>
                     {!isOwn && (
                       <Avatar
                         src={msg.sender?.avatar_url}
@@ -317,106 +306,99 @@ export default function MessagePane({ conversation, onBack }: Props) {
                         size="sm"
                       />
                     )}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: '100%' }}>
-                      {/* Reply reference */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, maxWidth: '100%' }}>
                       {msg.reply_to_id && (
-                        <div className="reply-preview">Replying to a message</div>
+                        <Box sx={{ p: 1, borderRadius: 1, borderLeft: '3px solid', borderColor: 'primary.main', bgcolor: 'rgba(108, 99, 255, 0.1)', fontSize: 12, color: 'text.secondary' }}>
+                          Replying to a message
+                        </Box>
                       )}
 
-                      {/* Bubble content */}
                       {msg.message_type === 'image' ? (
-                        <div className={`image-message ${isOwn ? 'outgoing' : ''}`}>
-                          <img src={msg.file_url || ''} alt="Image" />
-                        </div>
+                        <Box sx={{ borderRadius: 2, overflow: 'hidden', cursor: 'pointer', '&:hover': { transform: 'scale(1.02)' } }}>
+                          <img src={msg.file_url || ''} alt="Image" style={{ maxWidth: 240, display: 'block' }} />
+                        </Box>
                       ) : msg.message_type === 'file' || msg.message_type === 'audio' ? (
-                        <div className={`message-bubble ${isOwn ? 'outgoing' : 'incoming'}`}>
-                          <div className="file-message">
-                            <span style={{ fontSize: 24 }}>
-                              {msg.message_type === 'audio' ? '🎵' : '📎'}
-                            </span>
-                            <div>
-                              <div className="file-message-name">{msg.file_name || 'File'}</div>
+                        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: isOwn ? 'primary.main' : 'background.paper', border: isOwn ? 'none' : '1px solid', borderColor: 'divider' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                            <span style={{ fontSize: 24 }}>{msg.message_type === 'audio' ? '🎵' : '📎'}</span>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>{msg.file_name || 'File'}</Typography>
                               {msg.file_size && (
-                                <div className="file-message-size">
-                                  {(msg.file_size / 1024).toFixed(1)} KB
-                                </div>
+                                <Typography variant="caption" color="text.disabled">{(msg.file_size / 1024).toFixed(1)} KB</Typography>
                               )}
-                            </div>
+                            </Box>
                             {msg.file_url && (
-                              <a href={msg.file_url} download target="_blank" style={{ marginLeft: 'auto' }}>
-                                ⬇️
-                              </a>
+                              <a href={msg.file_url} download target="_blank" style={{ marginLeft: 'auto', textDecoration: 'none' }}>⬇️</a>
                             )}
-                          </div>
-                        </div>
+                          </Box>
+                        </Box>
                       ) : (
-                        <div
-                          className={`message-bubble ${isOwn ? 'outgoing' : 'incoming'}`}
+                        <Box
                           onDoubleClick={() => setReplyTo(msg)}
+                          sx={{
+                            p: 1.25,
+                            borderRadius: 3,
+                            bgcolor: isOwn ? 'primary.main' : 'background.paper',
+                            color: isOwn ? 'white' : 'text.primary',
+                            borderBottomRightRadius: isOwn ? 4 : 18,
+                            borderBottomLeftRadius: isOwn ? 18 : 4,
+                            border: isOwn ? 'none' : '1px solid',
+                            borderColor: 'divider',
+                            wordBreak: 'break-word',
+                          }}
                         >
                           {msg.content}
-                        </div>
+                        </Box>
                       )}
 
-                      {/* Time + status */}
-                      <div className="flex items-center gap-1" style={{
-                        justifyContent: isOwn ? 'flex-end' : 'flex-start'
-                      }}>
-                        <span className="message-time">
-                          {format(new Date(msg.created_at), 'p')}
-                        </span>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
+                        <Typography variant="caption" color="text.disabled">{format(new Date(msg.created_at), 'p')}</Typography>
                         {isOwn && (
-                          <span style={{ color: msg.status === 'read' ? 'var(--primary)' : 'var(--text-tertiary)' }}>
-                            {msg.status === 'read'
-                              ? <CheckCheck size={12} />
-                              : <Check size={12} />}
-                          </span>
+                          <Box sx={{ color: msg.status === 'read' ? 'primary.main' : 'text.disabled' }}>
+                            {msg.status === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
+                          </Box>
                         )}
-                      </div>
-                    </div>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
                 )
               })}
             </React.Fragment>
           ))}
 
-          {/* Typing indicator */}
           {otherTypingNames.length > 0 && (
-            <div className="message-bubble-wrap incoming" style={{ marginTop: 4 }}>
-              <div className="typing-indicator">
-                <div className="typing-dot" />
-                <div className="typing-dot" />
-                <div className="typing-dot" />
-              </div>
-            </div>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 1, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'text.disabled', animation: 'pulse 1.2s infinite' }} />
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'text.disabled', animation: 'pulse 1.2s infinite', animationDelay: '0.2s' }} />
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'text.disabled', animation: 'pulse 1.2s infinite', animationDelay: '0.4s' }} />
+              </Box>
+            </Box>
           )}
 
           <div ref={messagesEndRef} />
-        </div>
+        </Box>
 
-        {/* Reply preview */}
         {replyTo && (
-          <div style={{ padding: '0 16px', background: 'var(--bg-surface)' }}>
-            <div className="reply-preview flex items-center justify-between">
-              <div>
-                <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: 11, marginBottom: 2 }}>
+          <Box sx={{ px: 2, py: 1, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1, borderRadius: 1, borderLeft: '3px solid', borderColor: 'primary.main', bgcolor: 'rgba(108, 99, 255, 0.1)' }}>
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
                   Replying to {replyTo.sender?.display_name || replyTo.sender?.username}
-                </div>
-                {replyTo.content?.slice(0, 60)}
-              </div>
-              <button className="icon-btn" onClick={() => setReplyTo(null)}>
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>{replyTo.content?.slice(0, 60)}</Typography>
+              </Box>
+              <IconButton size="small" onClick={() => setReplyTo(null)}>
                 <X size={14} />
-              </button>
-            </div>
-          </div>
+              </IconButton>
+            </Box>
+          </Box>
         )}
 
-        {/* Input area */}
-        <div className="message-input-area">
-          <div className="message-input-wrap" style={{ position: 'relative' }}>
-            {/* Emoji picker */}
+        <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.25, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: '9999px', p: 1, pl: 2 }}>
             {showEmoji && (
-              <div className="emoji-picker-container">
+              <Box sx={{ position: 'absolute', bottom: '100%', left: 0, mb: 1, animation: 'scaleIn 0.2s ease', transformOrigin: 'bottom left', zIndex: 50 }}>
                 <EmojiPicker
                   data={data}
                   onEmojiSelect={(e: { native: string }) => {
@@ -427,26 +409,16 @@ export default function MessagePane({ conversation, onBack }: Props) {
                   theme="dark"
                   previewPosition="none"
                 />
-              </div>
+              </Box>
             )}
 
-            {/* Emoji button */}
-            <button
-              className="icon-btn"
-              onClick={() => setShowEmoji(s => !s)}
-              style={{ flexShrink: 0 }}
-            >
+            <IconButton size="small" onClick={() => setShowEmoji(s => !s)} sx={{ flexShrink: 0, color: 'text.secondary' }}>
               <Smile size={18} />
-            </button>
+            </IconButton>
 
-            {/* File button */}
-            <button
-              className="icon-btn"
-              onClick={() => fileInputRef.current?.click()}
-              style={{ flexShrink: 0 }}
-            >
+            <IconButton size="small" onClick={() => fileInputRef.current?.click()} sx={{ flexShrink: 0, color: 'text.secondary' }}>
               <Paperclip size={18} />
-            </button>
+            </IconButton>
             <input
               ref={fileInputRef}
               type="file"
@@ -455,34 +427,49 @@ export default function MessagePane({ conversation, onBack }: Props) {
               accept="image/*,application/pdf,text/*,audio/*,video/*"
             />
 
-            {/* Text input */}
             <textarea
               ref={inputRef}
-              className="message-input"
               placeholder="Type a message..."
               value={inputText}
               onChange={(e) => handleTyping(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              style={{ resize: 'none' }}
+              style={{
+                flex: 1,
+                background: 'none',
+                color: '#F0F0FF',
+                fontSize: 14,
+                resize: 'none',
+                maxHeight: 120,
+                minHeight: 24,
+                lineHeight: 1.6,
+                padding: '2px 0',
+                fontFamily: 'inherit',
+                outline: 'none',
+                border: 'none',
+              }}
             />
 
-            {/* Send button */}
-            <button
-              className="send-btn"
+            <IconButton
               onClick={handleSend}
               disabled={!inputText.trim() || sending}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                bgcolor: inputText.trim() && !sending ? 'primary.main' : 'rgba(255,255,255,0.06)',
+                color: inputText.trim() && !sending ? 'white' : 'text.disabled',
+                '&:hover': inputText.trim() && !sending ? { bgcolor: 'primary.light', transform: 'scale(1.05)' } : {},
+                flexShrink: 0,
+              }}
             >
               <Send size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
 
-      {/* Incoming call toast */}
       {incomingCall && <IncomingCallToast />}
-
-      {/* Active call overlay */}
       {(callStatus === 'connected' || callStatus === 'calling') && <VideoCallOverlay />}
     </>
   )

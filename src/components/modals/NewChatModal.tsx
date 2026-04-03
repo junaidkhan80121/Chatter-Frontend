@@ -3,6 +3,7 @@ import { X, Search, UserPlus } from 'lucide-react'
 import { userApi, convApi } from '@/services/api'
 import { useChatStore, type Conversation } from '@/store/chatStore'
 import Avatar from '@/components/ui/Avatar'
+import { Box, Typography, TextField, IconButton, Button, CircularProgress, Dialog, DialogTitle, DialogContent, InputAdornment } from '@mui/material'
 
 interface Props {
   onClose: () => void
@@ -23,7 +24,6 @@ export default function NewChatModal({ onClose, onChatCreated }: Props) {
       const { data } = await userApi.search(query)
       setResults(data)
     } catch {
-      // Fallback for Dev Bypass mode since backend isn't running
       setResults([
         { id: 'dev-user-2', username: query, display_name: `${query} (Offline)`, status: 'offline', avatar_url: null },
         { id: 'dev-user-3', username: 'Alex', display_name: 'Alex Turner', status: 'online', avatar_url: null }
@@ -42,7 +42,6 @@ export default function NewChatModal({ onClose, onChatCreated }: Props) {
       if (onChatCreated) onChatCreated(data)
       onClose()
     } catch {
-      // Fallback for Dev Bypass mode
       const dummyConv: Conversation = {
         id: `dummy-conv-${Date.now()}`,
         type: 'direct',
@@ -63,54 +62,85 @@ export default function NewChatModal({ onClose, onChatCreated }: Props) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">New Message</h2>
-          <button className="icon-btn" onClick={onClose}><X size={20} /></button>
-        </div>
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 4,
+          p: 1,
+        }
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>New Message</Typography>
+        <IconButton onClick={onClose} size="small">
+          <X size={20} />
+        </IconButton>
+      </DialogTitle>
 
+      <DialogContent>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          <div className="search-bar" style={{ flex: 1 }}>
-            <Search size={16} style={{ color: 'var(--text-tertiary)' }} />
-            <input
-              placeholder="Search username or email..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading || !query.trim()}>
-            {loading ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : 'Find'}
-          </button>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search username or email..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            autoFocus
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={16} style={{ color: 'rgba(240, 240, 255, 0.35)' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 6 } }}
+          />
+          <Button type="submit" variant="contained" disabled={loading || !query.trim()} sx={{ borderRadius: 6 }}>
+            {loading ? <CircularProgress size={20} /> : 'Find'}
+          </Button>
         </form>
 
-        <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+        <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
           {results.length === 0 && !loading && query && (
-            <div className="empty-state" style={{ padding: '40px 0' }}>
-              <div className="empty-state-icon">🔍</div>
-              <div className="empty-state-sub">Type a name to search</div>
-            </div>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, gap: 1 }}>
+              <Typography sx={{ fontSize: 48 }}>🔍</Typography>
+              <Typography variant="body2" color="text.disabled">Type a name to search</Typography>
+            </Box>
           )}
           
           {results.map(u => (
-            <div key={u.id} className="chat-item" style={{ borderRadius: 'var(--radius-md)', padding: '12px' }}>
+            <Box
+              key={u.id}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: 1.5,
+                p: 1.5, borderRadius: 2,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'rgba(108, 99, 255, 0.08)' },
+              }}
+            >
               <Avatar src={u.avatar_url} name={u.display_name || u.username} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{u.display_name || u.username}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>@{u.username}</div>
-              </div>
-              <button 
-                className="icon-btn" 
-                style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.display_name || u.username}</Typography>
+                <Typography variant="caption" color="text.disabled">@{u.username}</Typography>
+              </Box>
+              <IconButton
                 onClick={() => startChat(u)}
+                sx={{ bgcolor: 'rgba(108, 99, 255, 0.1)', color: 'primary.main', '&:hover': { bgcolor: 'rgba(108, 99, 255, 0.2)' } }}
+                size="small"
               >
                 <UserPlus size={18} />
-              </button>
-            </div>
+              </IconButton>
+            </Box>
           ))}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </DialogContent>
+    </Dialog>
   )
 }

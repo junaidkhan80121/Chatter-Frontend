@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/services/api'
 import { useNavigate } from 'react-router-dom'
+import {
+  Box,
+  Card,
+  TextField,
+  Button,
+  Typography,
+  ToggleButtonGroup,
+  ToggleButton,
+  IconButton,
+  InputAdornment,
+  Alert,
+  Divider,
+} from '@mui/material'
+import { themeColors } from '@/theme'
 
 export default function AuthPage() {
   const [tab, setTab] = useState<'login' | 'register'>('login')
@@ -11,7 +25,6 @@ export default function AuthPage() {
   const [otpStep, setOtpStep] = useState(false)
   const [devOtp, setDevOtp] = useState('')
 
-  // Form fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
@@ -24,10 +37,6 @@ export default function AuthPage() {
   useEffect(() => {
     if (isAuthenticated) navigate('/')
   }, [isAuthenticated])
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,163 +71,204 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="auth-page" style={{ position: 'relative' }}>
-      {/* Theme Toggle */}
-      <button 
-        className="icon-btn" 
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        p: 2.5,
+        overflow: 'auto',
+      }}
+    >
+      <IconButton
         onClick={toggleTheme}
-        style={{ position: 'absolute', top: 20, right: 20 }}
+        sx={{ position: 'absolute', top: 20, right: 20, color: 'text.secondary' }}
       >
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+        {theme === 'dark' ? '🌙' : '☀️'}
+      </IconButton>
 
-      <div className="auth-card">
-        {/* Logo */}
-        <div className="auth-logo">
-          <div className="auth-logo-icon">⚡</div>
-          <div className="auth-logo-name">Chatter</div>
-          <div className="auth-tagline">The Fluid Dialogue</div>
-        </div>
+      <Card
+        sx={{
+          width: '100%',
+          maxWidth: 440,
+          p: 5,
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: 3,
+              background: `linear-gradient(135deg, ${themeColors.primary}, #a78bfa)`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 28,
+              mb: 1.5,
+              boxShadow: themeColors.primaryGlow,
+            }}
+          >
+            ⚡
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 800, background: `linear-gradient(135deg, ${themeColors.primary}, #a78bfa)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Chatter
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            The Fluid Dialogue
+          </Typography>
+        </Box>
 
-        {/* Tabs */}
         {mode === 'password' && !otpStep && (
-          <div className="auth-tabs">
-            <div
-              className={`auth-tab ${tab === 'login' ? 'active' : ''}`}
-              onClick={() => { setTab('login'); setError('') }}
-            >
-              Sign In
-            </div>
-            <div
-              className={`auth-tab ${tab === 'register' ? 'active' : ''}`}
-              onClick={() => { setTab('register'); setError('') }}
-            >
-              Sign Up
-            </div>
-          </div>
+          <ToggleButtonGroup
+            value={tab}
+            exclusive
+            onChange={(_, v) => v && (setTab(v), setError(''))}
+            fullWidth
+            sx={{
+              mb: 3.5,
+              '& .MuiToggleButton-root': {
+                borderRadius: '9999px !important',
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 2,
+                py: 1,
+                color: 'text.secondary',
+                border: 'none',
+                bgcolor: 'rgba(255,255,255,0.06)',
+                '&.Mui-selected': {
+                  bgcolor: themeColors.primary,
+                  color: 'white',
+                  boxShadow: '0 4px 24px rgba(108, 99, 255, 0.25)',
+                },
+              },
+            }}
+          >
+            <ToggleButton value="login">Sign In</ToggleButton>
+            <ToggleButton value="register">Sign Up</ToggleButton>
+          </ToggleButtonGroup>
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* OTP Mode */}
           {mode === 'otp' ? (
             <>
               {!otpStep ? (
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input
-                    className="input-field"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="Email Address"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  sx={{ mb: 2 }}
+                />
               ) : (
-                <div className="form-group">
-                  <label className="form-label">Enter OTP</label>
-                  <input
-                    className="input-field"
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Enter OTP"
                     type="text"
                     placeholder="6-digit code"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    maxLength={6}
-                    style={{ letterSpacing: '0.3em', fontSize: '20px', textAlign: 'center' }}
+                    inputProps={{ maxLength: 6, style: { letterSpacing: '0.3em', textAlign: 'center', fontSize: 20 } }}
                     required
                     autoFocus
                   />
                   {devOtp && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--primary-subtle)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: 'var(--primary)' }}>
+                    <Box sx={{ mt: 1, p: 1, bgcolor: themeColors.primarySubtle, borderRadius: 1, fontSize: 12, color: themeColors.primary }}>
                       🔑 Dev OTP: <strong>{devOtp}</strong>
-                    </div>
+                    </Box>
                   )}
-                </div>
+                </Box>
               )}
             </>
           ) : (
             <>
               {tab === 'register' && (
                 <>
-                  <div className="form-group">
-                    <label className="form-label">Username</label>
-                    <input
-                      className="input-field"
-                      type="text"
-                      placeholder="john_doe"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Display Name (optional)</label>
-                    <input
-                      className="input-field"
-                      type="text"
-                      placeholder="John Doe"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                    />
-                  </div>
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    placeholder="john_doe"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Display Name (optional)"
+                    placeholder="John Doe"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
                 </>
               )}
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  className="input-field"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <input
-                  className="input-field"
-                  type="password"
-                  placeholder="Min 8 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                placeholder="Min 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                sx={{ mb: 2 }}
+              />
             </>
           )}
 
-          {error && <div className="form-error" style={{ marginBottom: 16 }}>{error}</div>}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-          <button
+          <Button
             type="submit"
-            className="btn btn-primary w-full"
-            style={{ marginTop: 8 }}
+            variant="contained"
+            fullWidth
             disabled={loading}
+            sx={{ mt: 1, py: 1.25 }}
           >
-            {loading ? <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> : (
+            {loading ? 'Loading...' : (
               mode === 'otp'
                 ? (otpStep ? 'Verify OTP' : 'Send OTP')
                 : tab === 'login' ? 'Sign In' : 'Create Account'
             )}
-          </button>
+          </Button>
         </form>
 
-        {/* Toggle OTP */}
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <button
-            className="btn btn-ghost btn-sm"
+        <Box sx={{ textAlign: 'center', mt: 2.5 }}>
+          <Button
+            variant="text"
+            size="small"
             onClick={() => { setMode(m => m === 'password' ? 'otp' : 'password'); setOtpStep(false); setError('') }}
           >
             {mode === 'password' ? '🔑 Sign in with OTP instead' : '🔒 Use password instead'}
-          </button>
-        </div>
+          </Button>
+        </Box>
 
-        {/* Quick Dev Bypass */}
-        <div style={{ textAlign: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ color: '#00D1A1', flex: 1, padding: 0 }}
+        <Divider sx={{ my: 2 }} />
+
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+          <Button
+            variant="text"
+            size="small"
+            sx={{ color: '#00D1A1' }}
             onClick={() => {
               setAuth(
                 { id: 'dev-user-1', username: 'tester_1', email: 't1@example.com', display_name: 'Alex (User 1)', status: 'online', avatar_url: null, unique_share_id: 'dummy-123', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
@@ -229,11 +279,12 @@ export default function AuthPage() {
             }}
           >
             🚀 Login User 1
-          </button>
+          </Button>
           
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ color: '#FFB830', flex: 1, padding: 0 }}
+          <Button
+            variant="text"
+            size="small"
+            sx={{ color: '#FFB830' }}
             onClick={() => {
               setAuth(
                 { id: 'dev-user-2', username: 'tester_2', email: 't2@example.com', display_name: 'Sam (User 2)', status: 'online', avatar_url: null, unique_share_id: 'dummy-456', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
@@ -244,9 +295,9 @@ export default function AuthPage() {
             }}
           >
             🚀 Login User 2
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Card>
+    </Box>
   )
 }

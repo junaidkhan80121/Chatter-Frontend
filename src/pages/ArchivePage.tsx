@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Search, UserPlus, Phone, MessageSquare } from 'lucide-react'
-import { friendApi, userApi, convApi } from '@/services/api'
+import { friendApi, userApi } from '@/services/api'
 import { useChatStore, type Conversation } from '@/store/chatStore'
 import Avatar from '@/components/ui/Avatar'
 import { useAuthStore } from '@/store/authStore'
 import { formatDistanceToNow } from 'date-fns'
+import { Box, Typography, TextField, Button, IconButton, ToggleButtonGroup, ToggleButton, InputAdornment, Badge } from '@mui/material'
 
 interface Props {
   onOpenConv?: (conv: Conversation) => void
@@ -16,7 +17,7 @@ export default function ArchivePage({ onOpenConv }: Props) {
   const [addSearch, setAddSearch] = useState('')
   const [addResults, setAddResults] = useState<any[]>([])
   const [addLoading, setAddLoading] = useState(false)
-  const { conversations, setConversations } = useChatStore()
+  const { conversations } = useChatStore()
   const { user } = useAuthStore()
 
   const archivedConvs = conversations.filter((c) => !!c.archived_at)
@@ -52,10 +53,7 @@ export default function ArchivePage({ onOpenConv }: Props) {
   }
 
   const handleUnarchive = async (convId: string) => {
-    try {
-      // For now client-side only
-      alert('Unarchived! (refresh to see in main list)')
-    } catch { /* silent */ }
+    alert('Unarchived! (refresh to see in main list)')
   }
 
   const getConvName = (conv: Conversation): string => {
@@ -65,134 +63,130 @@ export default function ArchivePage({ onOpenConv }: Props) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '20px 16px 0', borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700 }}>The Fluid Dialogue</h1>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="icon-btn"><Search size={18} /></button>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'var(--primary-subtle)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center'
-            }}>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>The Fluid Dialogue</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton size="small" sx={{ color: 'text.secondary' }}><Search size={18} /></IconButton>
+            <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: 'rgba(108, 99, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Avatar src={user?.avatar_url} name={user?.display_name || user?.username} size="sm" />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
-        {/* Tabs */}
-        <div className="flex gap-0" style={{ background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', padding: 3, marginBottom: 12 }}>
-          <button
-            className={`auth-tab ${activeTab === 'archived' ? 'active' : ''}`}
-            onClick={() => setActiveTab('archived')}
-          >
-            Archived
-          </button>
-          <button
-            className={`auth-tab ${activeTab === 'contacts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('contacts')}
-          >
-            Contacts
-          </button>
-        </div>
-      </div>
+        <ToggleButtonGroup
+          value={activeTab}
+          exclusive
+          onChange={(_, v) => v && setActiveTab(v)}
+          fullWidth
+          sx={{
+            '& .MuiToggleButton-root': {
+              borderRadius: '9999px !important',
+              textTransform: 'none',
+              fontWeight: 500,
+              py: 0.75,
+              color: 'text.secondary',
+              border: 'none',
+              bgcolor: 'rgba(255,255,255,0.06)',
+              '&.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'white',
+              },
+            },
+          }}
+        >
+          <ToggleButton value="archived">Archived</ToggleButton>
+          <ToggleButton value="contacts">Contacts</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-        {/* Add Friend */}
+      <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
         {activeTab === 'contacts' && (
-          <div style={{ marginBottom: 20 }}>
-            <div
-              className="btn btn-primary w-full"
-              style={{ justifyContent: 'center', gap: 8, marginBottom: 12 }}
-            >
+          <Box sx={{ mb: 2.5 }}>
+            <Button variant="contained" fullWidth sx={{ mb: 1.5, gap: 1, justifyContent: 'center' }}>
               <UserPlus size={16} />
               Add New Friend
-            </div>
+            </Button>
 
-            <div className="search-bar" style={{ marginBottom: 8 }}>
-              <Search size={14} style={{ color: 'var(--text-tertiary)' }} />
-              <input
-                placeholder="Search by username or ID..."
-                value={addSearch}
-                onChange={(e) => setAddSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search by username or ID..."
+              value={addSearch}
+              onChange={(e) => setAddSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={14} style={{ color: 'rgba(240, 240, 255, 0.35)' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 6 } }}
+            />
 
             {addResults.map((u) => (
-              <div key={u.id} className="add-friend-result">
+              <Box key={u.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'primary.main', bgcolor: 'rgba(108, 99, 255, 0.05)', mt: 1 }}>
                 <Avatar src={u.avatar_url} name={u.display_name || u.username} size="md" />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{u.display_name || u.username}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>@{u.username}</div>
-                </div>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleSendFriendRequest(u.id)}
-                >
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.display_name || u.username}</Typography>
+                  <Typography variant="caption" color="text.disabled">@{u.username}</Typography>
+                </Box>
+                <Button variant="contained" size="small" onClick={() => handleSendFriendRequest(u.id)} sx={{ borderRadius: 4 }}>
                   <UserPlus size={13} />
-                </button>
-              </div>
+                </Button>
+              </Box>
             ))}
-          </div>
+          </Box>
         )}
 
         {activeTab === 'archived' && (
           <>
             {archivedConvs.length > 0 && (
-              <div>
-                <div className="section-label">
+              <Box>
+                <Typography variant="caption" sx={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled', mb: 1 }}>
                   Archived Chats
-                  <span className="badge" style={{ marginLeft: 8 }}>{archivedConvs.length}</span>
-                </div>
+                  <Badge badgeContent={archivedConvs.length} color="primary" sx={{ ml: 1 }} />
+                </Typography>
                 {archivedConvs.map((conv) => (
-                  <div key={conv.id} className="flex items-center gap-12" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                    <Avatar
-                      src={conv.participants.find(p => p.id !== user?.id)?.avatar_url}
-                      name={getConvName(conv)}
-                      size="md"
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{getConvName(conv)}</div>
+                  <Box key={conv.id} sx={{ display: 'flex', alignItems: 'center', gap: 3, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Avatar src={conv.participants.find(p => p.id !== user?.id)?.avatar_url} name={getConvName(conv)} size="md" />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{getConvName(conv)}</Typography>
                       {conv.last_message && (
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {conv.last_message.content || 'Media'}
-                        </div>
+                        </Typography>
                       )}
-                    </div>
+                    </Box>
                     {conv.archived_at && (
-                      <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                      <Typography variant="caption" color="text.disabled">
                         {formatDistanceToNow(new Date(conv.archived_at), { addSuffix: true })}
-                      </div>
+                      </Typography>
                     )}
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
-                      onClick={() => handleUnarchive(conv.id)}
-                    >
+                    <Button variant="text" size="small" sx={{ color: 'primary.main', bgcolor: 'rgba(108, 99, 255, 0.1)', borderRadius: 4, fontSize: 10 }} onClick={() => handleUnarchive(conv.id)}>
                       RESTORE
-                    </button>
-                  </div>
+                    </Button>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
           </>
         )}
 
-        {/* Contacts */}
         {activeTab === 'contacts' && (
-          <div>
-            <div className="section-label">Contacts</div>
+          <Box>
+            <Typography variant="caption" sx={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled', mb: 1 }}>
+              Contacts
+            </Typography>
             {contacts.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">👥</div>
-                <div className="empty-state-title">No contacts yet</div>
-                <div className="empty-state-sub">Search for friends to connect</div>
-              </div>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, gap: 1 }}>
+                <Typography sx={{ fontSize: 48 }}>👥</Typography>
+                <Typography variant="body2" color="text.disabled">No contacts yet</Typography>
+                <Typography variant="caption" color="text.disabled">Search for friends to connect</Typography>
+              </Box>
             ) : (
-              // Group by first letter
               Object.entries(
                 contacts.reduce((acc: Record<string, any[]>, f) => {
                   const other = f.requester_id === user?.id ? f.addressee : f.requester
@@ -203,31 +197,29 @@ export default function ArchivePage({ onOpenConv }: Props) {
                   return acc
                 }, {})
               ).sort(([a], [b]) => a.localeCompare(b)).map(([letter, users]: [string, any[]]) => (
-                <div key={letter}>
-                  <div className="section-label">{letter}</div>
+                <Box key={letter}>
+                  <Typography variant="caption" sx={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled', mt: 2, mb: 0.5 }}>
+                    {letter}
+                  </Typography>
                   {users.map((u: any) => (
-                    <div key={u?.id} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <Box key={u?.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
                       <Avatar src={u?.avatar_url} name={u?.display_name || u?.username} size="md" status={u?.status} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600 }}>{u?.display_name || u?.username}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{u?.display_name || u?.username}</Typography>
+                        <Typography variant="caption" color="text.disabled">
                           {u?.status === 'online' ? 'Active now' : u?.last_seen ? `Active ${formatDistanceToNow(new Date(u.last_seen), { addSuffix: true })}` : 'Offline'}
-                        </div>
-                      </div>
-                      <button className="icon-btn" title="Message">
-                        <MessageSquare size={16} />
-                      </button>
-                      <button className="icon-btn" title="Call">
-                        <Phone size={16} />
-                      </button>
-                    </div>
+                        </Typography>
+                      </Box>
+                      <IconButton size="small" sx={{ color: 'text.secondary' }}><MessageSquare size={16} /></IconButton>
+                      <IconButton size="small" sx={{ color: 'text.secondary' }}><Phone size={16} /></IconButton>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               ))
             )}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }

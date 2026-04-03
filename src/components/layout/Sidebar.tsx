@@ -1,10 +1,9 @@
-import React, { useEffect, useRef } from 'react'
-import { MessageSquare, Phone, Star, Archive, Settings, HelpCircle, Bell, LogOut } from 'lucide-react'
+import React from 'react'
+import { MessageSquare, Phone, Star, Archive, Settings, Bell } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import Avatar from '@/components/ui/Avatar'
-import { disconnectSocket } from '@/services/socket'
-import { useNavigate } from 'react-router-dom'
+import { Box, IconButton, Badge, Tooltip } from '@mui/material'
 
 type NavView = 'chats' | 'calls' | 'starred' | 'archive' | 'settings' | 'notifications'
 
@@ -14,17 +13,10 @@ interface Props {
 }
 
 export default function Sidebar({ activeView, onViewChange }: Props) {
-  const { user, logout, toggleTheme, theme } = useAuthStore()
+  const { user, toggleTheme, theme } = useAuthStore()
   const { conversations } = useChatStore()
-  const navigate = useNavigate()
 
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
-
-  const handleLogout = () => {
-    disconnectSocket()
-    logout()
-    navigate('/auth')
-  }
 
   const navItems = [
     { id: 'chats' as NavView, icon: MessageSquare, label: 'Chats' },
@@ -35,59 +27,123 @@ export default function Sidebar({ activeView, onViewChange }: Props) {
   ]
 
   return (
-    <nav className="nav-sidebar">
-      {/* Logo */}
-      <div className="nav-logo" title="Chatter">⚡</div>
+    <Box
+      sx={{
+        width: 72,
+        bgcolor: 'background.paper',
+        borderRight: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        py: 2,
+        gap: 0.5,
+        flexShrink: 0,
+      }}
+    >
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #6C63FF, #a78bfa)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 2,
+          boxShadow: '0 4px 24px rgba(108, 99, 255, 0.25)',
+          fontWeight: 800,
+          fontSize: 18,
+          color: 'white',
+        }}
+        title="Chatter"
+      >
+        ⚡
+      </Box>
 
-      {/* Nav items */}
       {navItems.map((item) => (
-        <button
-          key={item.id}
-          className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-          onClick={() => onViewChange(item.id)}
-          title={item.label}
-        >
-          <item.icon size={20} />
-          {item.id === 'chats' && totalUnread > 0 && (
-            <span className="badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
-          )}
-        </button>
+        <Tooltip key={item.id} title={item.label} placement="right">
+          <IconButton
+            onClick={() => onViewChange(item.id)}
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              color: activeView === item.id ? 'primary.main' : 'text.disabled',
+              bgcolor: activeView === item.id ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
+              '&:hover': { bgcolor: 'rgba(108, 99, 255, 0.08)' },
+            }}
+          >
+            <item.icon size={20} />
+            {item.id === 'chats' && totalUnread > 0 && (
+              <Badge
+                badgeContent={totalUnread > 99 ? '99+' : totalUnread}
+                sx={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  '& .MuiBadge-badge': {
+                    fontSize: '0.5625rem',
+                    minWidth: 16,
+                    height: 16,
+                  },
+                }}
+              />
+            )}
+          </IconButton>
+        </Tooltip>
       ))}
 
-      <div style={{ flex: 1 }} />
+      <Box sx={{ flex: 1 }} />
 
-      {/* Theme toggle */}
-      <button
-        className="nav-item"
-        onClick={toggleTheme}
-        title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-      >
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      <Tooltip title={theme === 'dark' ? 'Light mode' : 'Dark mode'} placement="right">
+        <IconButton
+          onClick={toggleTheme}
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            color: 'text.secondary',
+          }}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </IconButton>
+      </Tooltip>
 
-      {/* Settings */}
-      <button
-        className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
-        onClick={() => onViewChange('settings')}
-        title="Settings"
-      >
-        <Settings size={20} />
-      </button>
+      <Tooltip title="Settings" placement="right">
+        <IconButton
+          onClick={() => onViewChange('settings')}
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            color: activeView === 'settings' ? 'primary.main' : 'text.secondary',
+            bgcolor: activeView === 'settings' ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
+          }}
+        >
+          <Settings size={20} />
+        </IconButton>
+      </Tooltip>
 
-      {/* User avatar */}
-      <button
-        className="nav-item"
-        onClick={handleLogout}
-        title="Logout"
-        style={{ marginTop: 8, marginBottom: 4 }}
-      >
-        <Avatar
-          src={user?.avatar_url}
-          name={user?.display_name || user?.username}
-          size="sm"
-          status={user?.status as any}
-        />
-      </button>
-    </nav>
+      <Tooltip title="Logout" placement="right">
+        <IconButton
+          onClick={() => {}}
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            mt: 1,
+            mb: 0.5,
+          }}
+        >
+          <Avatar
+            src={user?.avatar_url}
+            name={user?.display_name || user?.username}
+            size="sm"
+            status={user?.status as any}
+          />
+        </IconButton>
+      </Tooltip>
+    </Box>
   )
 }

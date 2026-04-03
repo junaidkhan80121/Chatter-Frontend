@@ -7,6 +7,7 @@ import ArchivePage from '@/pages/ArchivePage'
 import { useSocket } from '@/hooks/useSocket'
 import { useChatStore, type Conversation } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
+import { Box, Typography } from '@mui/material'
 
 type NavView = 'chats' | 'calls' | 'starred' | 'archive' | 'settings' | 'notifications'
 
@@ -62,105 +63,136 @@ export default function ChatDashboard() {
       return <MessagePane conversation={activeConv} onBack={handleBack} />
     }
     return (
-      <div className="message-pane">
-        <div className="empty-state">
-          <div className="empty-state-icon">✨</div>
-          <div className="empty-state-title">Coming Soon</div>
-          <div className="empty-state-sub">This feature is under construction</div>
-        </div>
-      </div>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+        <EmptyState icon="✨" title="Coming Soon" subtitle="This feature is under construction" />
+      </Box>
     )
   }
 
   const midPanel = renderMiddlePanel()
 
   return (
-    <div className="app-layout">
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       {midPanel && (
-        <div
-          style={{
+        <Box
+          sx={{
             display: mobileShowChat ? 'none' : 'flex',
             flexDirection: 'column',
-            width: 'var(--sidebar-list-width)',
+            width: 320,
             flexShrink: 0,
+            bgcolor: 'background.paper',
+            borderRight: '1px solid',
+            borderColor: 'divider',
           }}
-          className="chat-list-sidebar"
         >
           {midPanel}
-        </div>
+        </Box>
       )}
 
-      <div
-        className={`message-pane ${mobileShowChat ? 'visible' : ''}`}
-        style={{ flex: 1, display: 'flex', minWidth: 0 }}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          minWidth: 0,
+          bgcolor: 'background.default',
+          ...(mobileShowChat ? {} : { display: { xs: 'none', md: 'flex' } }),
+        }}
       >
         {renderRightPanel()}
-      </div>
+      </Box>
 
-      <div className="mobile-bottom-nav">
-        {([
-          { id: 'chats' as NavView, icon: '💬', label: 'Chats' },
-          { id: 'calls' as NavView, icon: '📞', label: 'Calls' },
-          { id: 'archive' as NavView, icon: '📦', label: 'Archive' },
-          { id: 'settings' as NavView, icon: '⚙️', label: 'Settings' },
-        ] as const).map((item) => (
-          <div
-            key={item.id}
-            className={`mobile-nav-item ${activeView === item.id ? 'active' : ''}`}
-            onClick={() => { setActiveView(item.id); setMobileShowChat(false) }}
-          >
-            <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      <MobileBottomNav activeView={activeView} onViewChange={(v) => { setActiveView(v); setMobileShowChat(false) }} />
+    </Box>
+  )
+}
+
+function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+  return (
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 5, textAlign: 'center', color: 'text.disabled' }}>
+      <Typography sx={{ fontSize: 48, animation: 'float 3s ease-in-out infinite' }}>{icon}</Typography>
+      <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 700 }}>{title}</Typography>
+      <Typography variant="body2">{subtitle}</Typography>
+    </Box>
+  )
+}
+
+function MobileBottomNav({ activeView, onViewChange }: { activeView: NavView; onViewChange: (v: NavView) => void }) {
+  const items = [
+    { id: 'chats' as NavView, icon: '💬', label: 'Chats' },
+    { id: 'calls' as NavView, icon: '📞', label: 'Calls' },
+    { id: 'archive' as NavView, icon: '📦', label: 'Archive' },
+    { id: 'settings' as NavView, icon: '⚙️', label: 'Settings' },
+  ]
+
+  return (
+    <Box
+      sx={{
+        display: { xs: 'flex', md: 'none' },
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        bgcolor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        py: 1,
+        px: 'env(safe-area-inset-left)',
+      }}
+    >
+      {items.map((item) => (
+        <Box
+          key={item.id}
+          onClick={() => onViewChange(item.id)}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 0.375,
+            py: 0.75,
+            color: activeView === item.id ? 'primary.main' : 'text.disabled',
+            cursor: 'pointer',
+          }}
+        >
+          <Typography sx={{ fontSize: 20 }}>{item.icon}</Typography>
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>{item.label}</Typography>
+        </Box>
+      ))}
+    </Box>
   )
 }
 
 function CallsView() {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Calls</h1>
-      </div>
-      <div className="empty-state" style={{ flex: 1 }}>
-        <div className="empty-state-icon">📞</div>
-        <div className="empty-state-title">No recent calls</div>
-        <div className="empty-state-sub">Start a call from a chat</div>
-      </div>
-    </div>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>Calls</Typography>
+      </Box>
+      <EmptyState icon="📞" title="No recent calls" subtitle="Start a call from a chat" />
+    </Box>
   )
 }
 
 function StarredView() {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Starred</h1>
-      </div>
-      <div className="empty-state" style={{ flex: 1 }}>
-        <div className="empty-state-icon">⭐</div>
-        <div className="empty-state-title">No starred messages</div>
-        <div className="empty-state-sub">Star important messages to find them here</div>
-      </div>
-    </div>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>Starred</Typography>
+      </Box>
+      <EmptyState icon="⭐" title="No starred messages" subtitle="Star important messages to find them here" />
+    </Box>
   )
 }
 
 function NotificationsView() {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Notifications</h1>
-      </div>
-      <div className="empty-state" style={{ flex: 1 }}>
-        <div className="empty-state-icon">🔔</div>
-        <div className="empty-state-title">All caught up!</div>
-        <div className="empty-state-sub">No new notifications</div>
-      </div>
-    </div>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>Notifications</Typography>
+      </Box>
+      <EmptyState icon="🔔" title="All caught up!" subtitle="No new notifications" />
+    </Box>
   )
 }
