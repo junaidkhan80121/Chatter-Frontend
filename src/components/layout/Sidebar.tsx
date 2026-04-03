@@ -37,7 +37,7 @@ export default function Sidebar({ activeView, onViewChange }: Props) {
   return (
     <nav className="nav-sidebar">
       {/* Logo */}
-      <div className="nav-logo" title="PulseChat">⚡</div>
+      <div className="nav-logo" title="Chatter">⚡</div>
 
       {/* Nav items */}
       {navItems.map((item) => (

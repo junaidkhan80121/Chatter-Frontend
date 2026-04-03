@@ -63,7 +63,7 @@ export default function AuthPage() {
         {/* Logo */}
         <div className="auth-logo">
           <div className="auth-logo-icon">⚡</div>
-          <div className="auth-logo-name">PulseChat</div>
+          <div className="auth-logo-name">Chatter</div>
           <div className="auth-tagline">The Fluid Dialogue</div>
         </div>
 

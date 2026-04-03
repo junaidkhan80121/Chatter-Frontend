@@ -58,7 +58,7 @@ export default function VideoCallOverlay() {
       {/* Call header */}
       <div className="call-header">
         <div className="flex items-center gap-3">
-          <span className="call-brand">PulseChat</span>
+          <span className="call-brand">Chatter</span>
           <div className="call-e2e-badge">
             <Lock size={10} />
             END-TO-END ENCRYPTED
