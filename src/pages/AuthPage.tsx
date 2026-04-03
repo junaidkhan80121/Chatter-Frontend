@@ -18,12 +18,16 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('')
   const [otp, setOtp] = useState('')
 
-  const { setAuth, isAuthenticated } = useAuthStore()
+  const { setAuth, isAuthenticated, theme, toggleTheme } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (isAuthenticated) navigate('/')
   }, [isAuthenticated])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,7 +62,16 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="auth-page">
+    <div className="auth-page" style={{ position: 'relative' }}>
+      {/* Theme Toggle */}
+      <button 
+        className="icon-btn" 
+        onClick={toggleTheme}
+        style={{ position: 'absolute', top: 20, right: 20 }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
