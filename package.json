@@ -1,0 +1,37 @@
+{
+  "name": "pulsechat-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.22.3",
+    "socket.io-client": "^4.7.5",
+    "axios": "^1.7.0",
+    "zustand": "^4.5.2",
+    "@tanstack/react-query": "^5.40.0",
+    "date-fns": "^3.6.0",
+    "lucide-react": "^0.378.0",
+    "emoji-mart": "^5.6.0",
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
+    "react-hook-form": "^7.51.4",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.3.4",
+    "simple-peer": "^9.11.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@types/simple-peer": "^9.11.8",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}
