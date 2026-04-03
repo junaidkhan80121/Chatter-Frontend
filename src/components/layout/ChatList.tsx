@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { convApi } from '@/services/api'
 import Avatar from '@/components/ui/Avatar'
 import { formatDistanceToNow } from 'date-fns'
+import NewChatModal from '@/components/modals/NewChatModal'
 
 interface Props {
   onConvSelect: (conv: Conversation) => void
@@ -16,6 +17,7 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
   const { user } = useAuthStore()
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showNewChat, setShowNewChat] = useState(false)
 
   useEffect(() => {
     loadConversations()
@@ -84,7 +86,7 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
       <div className="chat-list-header">
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <h1 className="chat-list-title">{showArchived ? 'Archive' : 'Messages'}</h1>
-          <button className="icon-btn">
+          <button className="icon-btn" onClick={() => setShowNewChat(true)}>
             <Plus size={18} />
           </button>
         </div>
@@ -158,6 +160,16 @@ export default function ChatList({ onConvSelect, showArchived = false }: Props) 
           ))
         )}
       </div>
+
+      {showNewChat && (
+        <NewChatModal 
+          onClose={() => setShowNewChat(false)} 
+          onChatCreated={(conv) => {
+            onConvSelect(conv)
+            setShowNewChat(false)
+          }}
+        />
+      )}
     </div>
   )
 }
