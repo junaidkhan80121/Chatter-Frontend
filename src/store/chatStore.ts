@@ -68,6 +68,7 @@ interface ChatState {
   incrementUnread: (convId: string) => void
   clearUnread: (convId: string) => void
   updateUserStatus: (userId: string, status: string) => void
+  removeMessage: (convId: string, msgId: string) => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -167,5 +168,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
           p.id === userId ? { ...p, status } : p
         ),
       })),
+    })),
+
+  removeMessage: (convId, msgId) =>
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [convId]: (state.messages[convId] || []).filter((m) => m.id !== msgId),
+      },
+      conversations: state.conversations.map((c) => {
+        if (c.id !== convId) return c
+        if (c.last_message?.id !== msgId) return c
+        const remaining = (state.messages[convId] || []).filter((m) => m.id !== msgId)
+        return { ...c, last_message: remaining.length > 0 ? remaining[remaining.length - 1] : null }
+      }),
     })),
 }))
