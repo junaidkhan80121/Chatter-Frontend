@@ -47,33 +47,36 @@ export default function IncomingCallToast() {
   }
 
   return (
-    <div className="incoming-call-toast">
-      <div className="flex items-center gap-12" style={{ marginBottom: 16 }}>
-        <div className="call-ring-anim">
-          <Avatar src={caller?.avatar_url} name={callerName} size="lg" />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 2 }}>
-            Incoming {incomingCall.call_type} call
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>{callerName}</div>
-        </div>
-      </div>
+    <div className="incoming-call-screen">
+      <div className="incoming-call-card">
+        <div className="incoming-call-header">Incoming {incomingCall.call_type} call</div>
 
-      <div className="flex gap-3">
-        <button
-          className="incoming-call-action decline"
-          onClick={handleReject}
-        >
-          <PhoneOff size={16} /> Decline
-        </button>
-        <button
-          className="incoming-call-action answer"
-          onClick={handleAccept}
-        >
-          {incomingCall.call_type === 'video' ? <Video size={16} /> : <Phone size={16} />}
-          Answer
-        </button>
+        <div className="incoming-call-avatar-wrap">
+          <div className="call-ring-anim">
+            <Avatar src={caller?.avatar_url} name={callerName} size="xxl" />
+          </div>
+        </div>
+
+        <div className="incoming-call-name">{callerName}</div>
+        <div className="incoming-call-subtitle">
+          {incomingCall.call_type === 'video' ? 'Wants to start a video call' : 'Wants to start an audio call'}
+        </div>
+
+        <div className="incoming-call-actions">
+          <button
+            className="incoming-call-action decline"
+            onClick={handleReject}
+          >
+            <PhoneOff size={16} /> Decline
+          </button>
+          <button
+            className="incoming-call-action answer"
+            onClick={handleAccept}
+          >
+            {incomingCall.call_type === 'video' ? <Video size={16} /> : <Phone size={16} />}
+            Answer
+          </button>
+        </div>
       </div>
     </div>
   )
