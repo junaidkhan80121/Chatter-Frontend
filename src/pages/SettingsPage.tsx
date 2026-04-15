@@ -2,15 +2,30 @@ import React, { useState } from 'react'
 import {
   Bell, Shield, Eye, MessageSquare, Trash2,
   ChevronRight, Sun, Moon, Database, UserCircle,
-  Camera, LogOut
+  Camera, PhoneCall, Download, Signal
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { userApi } from '@/services/api'
 import Avatar from '@/components/ui/Avatar'
 import { Box, Typography, Switch, IconButton, Button } from '@mui/material'
 
+const PhoneIcon = PhoneCall
+const DownloadIcon = Download
+const SignalIcon = Signal
+
 export default function SettingsPage() {
-  const { user, updateUser, toggleTheme, theme } = useAuthStore()
+  const {
+    user,
+    updateUser,
+    toggleTheme,
+    theme,
+    messageNotificationsEnabled,
+    callSoundsEnabled,
+    messagePreviewEnabled,
+    autoDownloadMedia,
+    lowDataMode,
+    updatePreferences,
+  } = useAuthStore()
   const [saving, setSaving] = useState(false)
 
   const updateSetting = async (key: string, value: unknown) => {
@@ -157,13 +172,73 @@ export default function SettingsPage() {
           <SettingsItem
             icon={<Bell size={18} />}
             title="Notifications"
-            action={<ChevronRight size={16} style={{ color: 'rgba(240, 240, 255, 0.35)' }} />}
+            subtitle={messageNotificationsEnabled ? 'Message alerts enabled' : 'Muted'}
+            action={
+              <Switch
+                checked={messageNotificationsEnabled}
+                onChange={(e) => updatePreferences({ messageNotificationsEnabled: e.target.checked })}
+                size="small"
+              />
+            }
+          />
+
+          <SettingsItem
+            icon={<PhoneIcon size={18} />}
+            title="Call Sounds"
+            subtitle={callSoundsEnabled ? 'Ringtone enabled for incoming calls' : 'Silent'}
+            action={
+              <Switch
+                checked={callSoundsEnabled}
+                onChange={(e) => updatePreferences({ callSoundsEnabled: e.target.checked })}
+                size="small"
+              />
+            }
+          />
+
+          <SettingsItem
+            icon={<MessageSquare size={18} />}
+            title="Message Preview"
+            subtitle={messagePreviewEnabled ? 'Show message content in alerts' : 'Hide message content'}
+            action={
+              <Switch
+                checked={messagePreviewEnabled}
+                onChange={(e) => updatePreferences({ messagePreviewEnabled: e.target.checked })}
+                size="small"
+              />
+            }
           />
 
           <SettingsItem
             icon={<Database size={18} />}
             title="Storage and Data"
+            subtitle={lowDataMode ? 'Low data mode on' : 'Standard quality'}
             action={<ChevronRight size={16} style={{ color: 'rgba(240, 240, 255, 0.35)' }} />}
+          />
+
+          <SettingsItem
+            icon={<DownloadIcon size={18} />}
+            title="Auto-download Media"
+            subtitle={autoDownloadMedia ? 'Photos and videos auto-download' : 'Only download on tap'}
+            action={
+              <Switch
+                checked={autoDownloadMedia}
+                onChange={(e) => updatePreferences({ autoDownloadMedia: e.target.checked })}
+                size="small"
+              />
+            }
+          />
+
+          <SettingsItem
+            icon={<SignalIcon size={18} />}
+            title="Low Data Mode"
+            subtitle="Reduce call quality and media usage"
+            action={
+              <Switch
+                checked={lowDataMode}
+                onChange={(e) => updatePreferences({ lowDataMode: e.target.checked })}
+                size="small"
+              />
+            }
           />
         </Box>
 

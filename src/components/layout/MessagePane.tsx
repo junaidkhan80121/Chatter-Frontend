@@ -28,7 +28,7 @@ interface Props {
 export default function MessagePane({ conversation, onBack }: Props) {
   const { user } = useAuthStore()
   const { messages, setMessages, typing } = useChatStore()
-  const { status: callStatus, incomingCall } = useCallStore()
+  const { status: callStatus, incomingCall, setLocalStream } = useCallStore()
 
   const [inputText, setInputText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -160,10 +160,20 @@ export default function MessagePane({ conversation, onBack }: Props) {
     }
   }
 
-  const handleCall = (type: 'video' | 'audio') => {
+  const handleCall = async (type: 'video' | 'audio') => {
     if (!conversation) return
     const other = conversation.participants.find((p) => p.id !== user?.id)
     if (other) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: type === 'video',
+          audio: true,
+        })
+        setLocalStream(stream)
+      } catch {
+        alert('Microphone/camera permission is required to start a call.')
+        return
+      }
       initiateCall(other.id, type, conversation.id)
       useCallStore.getState().setCallType(type)
       useCallStore.getState().setPeerId(other.id)
