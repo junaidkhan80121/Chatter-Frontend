@@ -23,10 +23,16 @@ interface AuthState {
   refreshToken: string | null
   isAuthenticated: boolean
   theme: 'dark' | 'light'
+  messageNotificationsEnabled: boolean
+  callSoundsEnabled: boolean
+  messagePreviewEnabled: boolean
+  autoDownloadMedia: boolean
+  lowDataMode: boolean
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   updateUser: (updates: Partial<User>) => void
   logout: () => void
   toggleTheme: () => void
+  updatePreferences: (updates: Partial<Pick<AuthState, 'messageNotificationsEnabled' | 'callSoundsEnabled' | 'messagePreviewEnabled' | 'autoDownloadMedia' | 'lowDataMode'>>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -37,6 +43,11 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       theme: 'dark',
+      messageNotificationsEnabled: true,
+      callSoundsEnabled: true,
+      messagePreviewEnabled: true,
+      autoDownloadMedia: true,
+      lowDataMode: false,
 
       setAuth: (user, accessToken, refreshToken) => {
         localStorage.setItem('access_token', accessToken)
@@ -60,6 +71,8 @@ export const useAuthStore = create<AuthState>()(
         set({ theme: next })
         document.documentElement.setAttribute('data-theme', next)
       },
+
+      updatePreferences: (updates) => set(updates),
     }),
     {
       name: 'pulse-auth',
@@ -69,6 +82,11 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         theme: state.theme,
+        messageNotificationsEnabled: state.messageNotificationsEnabled,
+        callSoundsEnabled: state.callSoundsEnabled,
+        messagePreviewEnabled: state.messagePreviewEnabled,
+        autoDownloadMedia: state.autoDownloadMedia,
+        lowDataMode: state.lowDataMode,
       }),
     }
   )
