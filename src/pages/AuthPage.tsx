@@ -70,6 +70,23 @@ export default function AuthPage() {
     }
   }
 
+  const handleDemoLogin = async (email: string) => {
+    setError('')
+    setLoading(true)
+    try {
+      const res = await authApi.login({ email, password: 'demo12345' })
+      setAuth(res.data.user, res.data.access_token, res.data.refresh_token)
+      navigate('/')
+    } catch (err: any) {
+      setError(
+        err.response?.data?.detail ||
+          'Demo login failed. Make sure backend is running and demo seed is enabled.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -269,14 +286,8 @@ export default function AuthPage() {
             variant="text"
             size="small"
             sx={{ color: '#00D1A1' }}
-            onClick={() => {
-              setAuth(
-                { id: 'dev-user-1', username: 'tester_1', email: 't1@example.com', display_name: 'Alex (User 1)', status: 'online', avatar_url: null, unique_share_id: 'dummy-123', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
-                'dummy_token_1',
-                'refresh_1'
-              );
-              navigate('/');
-            }}
+            onClick={() => handleDemoLogin('demo1@chatter.dev')}
+            disabled={loading}
           >
             🚀 Login User 1
           </Button>
@@ -285,14 +296,8 @@ export default function AuthPage() {
             variant="text"
             size="small"
             sx={{ color: '#FFB830' }}
-            onClick={() => {
-              setAuth(
-                { id: 'dev-user-2', username: 'tester_2', email: 't2@example.com', display_name: 'Sam (User 2)', status: 'online', avatar_url: null, unique_share_id: 'dummy-456', show_online_status: true, allow_messages_from: 'everyone', read_receipts_enabled: true, created_at: new Date().toISOString(), two_factor_enabled: false, last_seen: null },
-                'dummy_token_2',
-                'refresh_2'
-              );
-              navigate('/');
-            }}
+            onClick={() => handleDemoLogin('demo2@chatter.dev')}
+            disabled={loading}
           >
             🚀 Login User 2
           </Button>
