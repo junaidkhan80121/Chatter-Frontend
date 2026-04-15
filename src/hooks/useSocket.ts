@@ -5,9 +5,13 @@ import { useCallStore } from '@/store/callStore'
 import { useAuthStore } from '@/store/authStore'
 import type { Message } from '@/store/chatStore'
 
+function emitCallToast(message: string, severity: 'info' | 'warning' | 'error' = 'info') {
+  window.dispatchEvent(new CustomEvent('chattr:call-toast', { detail: { message, severity } }))
+}
+
 export function useSocket() {
-  const { addMessage, setTyping, updateUserStatus, incrementUnread } = useChatStore()
-  const { setIncomingCall, setStatus, setRemoteStream, setLocalStream } = useCallStore()
+  const { addMessage, setTyping, updateUserStatus, incrementUnread, removeMessage } = useChatStore()
+  const { setIncomingCall, setStatus, setRemoteStream, setLocalStream, status: callStatus, incomingCall } = useCallStore()
   const { user, messageNotificationsEnabled, messagePreviewEnabled, callSoundsEnabled } = useAuthStore()
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
   const ringtoneIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -54,6 +58,13 @@ export function useSocket() {
   }, [playTone, stopCallRingtone])
 
   useEffect(() => {
+    // Hard-stop ringtone whenever call is no longer in ringing state.
+    if (callStatus !== 'ringing' || !incomingCall) {
+      stopCallRingtone()
+    }
+  }, [callStatus, incomingCall, stopCallRingtone])
+
+  useEffect(() => {
     if (!user || initialized.current) return
     initialized.current = true
 
@@ -85,6 +96,14 @@ export function useSocket() {
 
     socket.on('message_sent', (msg: Message) => {
       addMessage(msg)
+    })
+
+    socket.on('message_deleted_for_me', ({ conversation_id, message_id }: { conversation_id: string; message_id: string }) => {
+      removeMessage(conversation_id, message_id)
+    })
+
+    socket.on('message_deleted_everyone', ({ conversation_id, message_id }: { conversation_id: string; message_id: string }) => {
+      removeMessage(conversation_id, message_id)
     })
 
     socket.on('user_typing', ({ user_id, conversation_id, typing }: { user_id: string; conversation_id: string; typing: boolean }) => {
@@ -128,12 +147,21 @@ export function useSocket() {
 
     socket.on('call_rejected', () => {
       stopCallRingtone()
+      emitCallToast('Call declined by the other user.', 'warning')
       setStatus('ended')
       setTimeout(() => useCallStore.getState().resetCall(), 2000)
     })
 
+    socket.on('call_failed', ({ reason }: { reason?: string }) => {
+      stopCallRingtone()
+      emitCallToast(reason || 'Call failed.', 'error')
+      setStatus('ended')
+      setTimeout(() => useCallStore.getState().resetCall(), 1500)
+    })
+
     socket.on('call_ended', () => {
       stopCallRingtone()
+      emitCallToast('Call ended.', 'info')
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
         peerConnectionRef.current = null
@@ -180,19 +208,26 @@ export function useSocket() {
     return () => {
       socket.off('message_new')
       socket.off('message_sent')
+      socket.off('message_deleted_for_me')
+      socket.off('message_deleted_everyone')
       socket.off('user_typing')
       socket.off('user_status_changed')
       socket.off('call_incoming')
       socket.off('call_accepted')
       socket.off('call_rejected')
+      socket.off('call_failed')
       socket.off('call_ended')
       socket.off('webrtc_offer')
       socket.off('webrtc_answer')
       socket.off('webrtc_ice_candidate')
       stopCallRingtone()
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {})
+        audioContextRef.current = null
+      }
       initialized.current = false
     }
-  }, [user?.id, callSoundsEnabled, incrementUnread, addMessage, messageNotificationsEnabled, messagePreviewEnabled, playTone, setIncomingCall, setLocalStream, setRemoteStream, setStatus, setTyping, startCallRingtone, stopCallRingtone, updateUserStatus])
+  }, [user?.id, callSoundsEnabled, incrementUnread, addMessage, messageNotificationsEnabled, messagePreviewEnabled, playTone, removeMessage, setIncomingCall, setLocalStream, setRemoteStream, setStatus, setTyping, startCallRingtone, stopCallRingtone, updateUserStatus])
 
   const createPeerConnection = useCallback((targetUserId: string) => {
     const config: RTCConfiguration = {
