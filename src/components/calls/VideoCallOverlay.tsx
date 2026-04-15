@@ -69,6 +69,10 @@ export default function VideoCallOverlay() {
             <Clock size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
             {status === 'connected' ? formatDuration(callDuration) : 'Connecting...'}
           </div>
+          <button className="quick-end-btn" onClick={handleEndCall} title="End call">
+            <PhoneOff size={14} />
+            End
+          </button>
         </div>
       </div>
 
@@ -170,6 +174,17 @@ export default function VideoCallOverlay() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div className="call-chat-panel-body">
+              <div className="call-chat-empty">
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>In-call chat</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  Chat messages during calls will appear here.
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -7,7 +7,8 @@ import ArchivePage from '@/pages/ArchivePage'
 import { useSocket } from '@/hooks/useSocket'
 import { useChatStore, type Conversation } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
-import { Box, Typography } from '@mui/material'
+import { notifApi } from '@/services/api'
+import { Box, Typography, Button } from '@mui/material'
 
 type NavView = 'chats' | 'calls' | 'starred' | 'archive' | 'settings' | 'notifications'
 
@@ -15,6 +16,7 @@ export default function ChatDashboard() {
   const [activeView, setActiveView] = useState<NavView>('chats')
   const [activeConv, setActiveConv] = useState<Conversation | null>(null)
   const [mobileShowChat, setMobileShowChat] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   const { setActiveConv: storeSetActiveConv } = useChatStore()
   const { theme } = useAuthStore()
@@ -73,7 +75,12 @@ export default function ChatDashboard() {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((s) => !s)}
+      />
 
       {midPanel && (
         <Box
@@ -187,12 +194,56 @@ function StarredView() {
 }
 
 function NotificationsView() {
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      try {
+        const { data } = await notifApi.list()
+        setNotifications(data)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const markAllRead = async () => {
+    await notifApi.markAllRead()
+    setNotifications((current) => current.map((n) => ({ ...n, is_read: true })))
+  }
+
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
-      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Box sx={{ p: 2.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>Notifications</Typography>
+        <Button variant="text" size="small" onClick={markAllRead}>Mark all read</Button>
       </Box>
-      <EmptyState icon="🔔" title="All caught up!" subtitle="No new notifications" />
+      {loading ? (
+        <EmptyState icon="⏳" title="Loading..." subtitle="Fetching notifications" />
+      ) : notifications.length === 0 ? (
+        <EmptyState icon="🔔" title="All caught up!" subtitle="No new notifications" />
+      ) : (
+        <Box sx={{ p: 2, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          {notifications.map((notif) => (
+            <Box
+              key={notif.id}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: notif.is_read ? 'divider' : 'primary.main',
+                bgcolor: notif.is_read ? 'background.default' : 'rgba(108,99,255,0.08)',
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>{notif.title || 'Notification'}</Typography>
+              <Typography variant="caption" color="text.secondary">{notif.body || '-'}</Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   )
 }

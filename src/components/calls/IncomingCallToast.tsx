@@ -62,15 +62,14 @@ export default function IncomingCallToast() {
 
       <div className="flex gap-3">
         <button
-          className="btn btn-danger flex-1"
+          className="incoming-call-action decline"
           onClick={handleReject}
         >
           <PhoneOff size={16} /> Decline
         </button>
         <button
-          className="btn btn-primary flex-1"
+          className="incoming-call-action answer"
           onClick={handleAccept}
-          style={{ background: 'var(--accent-teal)' }}
         >
           {incomingCall.call_type === 'video' ? <Video size={16} /> : <Phone size={16} />}
           Answer
